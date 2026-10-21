@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include<Adafruit_PWMServoDriver.h>
+#include <ArduinoBluepad32.h>
 
 #define servoMin 500
 #define servoMax 2400
