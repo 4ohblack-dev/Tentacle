@@ -42,22 +42,59 @@ struct controllerInput{
 
 controllerInput input;
 
+// 今回はゲームパッド1台を追跡する
+ControllerPtr gamepad = nullptr;
+
+void onControllerConnected(ControllerPtr ctl) {
+  if (!ctl->isGamepad()) {
+    Serial.println("[BT] Connected device is not a gamepad");
+    return;
+  }
+
+  if (gamepad != nullptr) {
+    Serial.println("[BT] Another gamepad connected; ignored");
+    return;
+  }
+
+  gamepad = ctl;
+  input.connected = true;
+
+  Serial.print("[BT] Gamepad connected: ");
+  Serial.println(ctl->getModelName());
+}
+
+void onControllerDisconnected(ControllerPtr ctl) {
+  if (ctl != gamepad) {
+    return;
+  }
+
+  gamepad = nullptr;
+  input = controllerInput{};  // connectedを含めて初期値に戻す
+
+  Serial.println("[BT] Gamepad disconnected");
+}
+
 void setup(){
   Serial.begin(115200);
   Wire.begin(SDApin,SCLpin);
 
 
   if(!pca.begin()){
-    Serial.println("pca not found");
-    while(true){
-      delay(100);
-    }
+    Serial.println("pca not found, continuing bluetooth test");
+  } else{
+    pca.setPWMFreq(50);
+    Serial.println("pca ready");
   }
-  pca.setPWMFreq(50);
-  delay(1000);
+  Serial.print("[BT] Bluepad32 firmware: ");
+  Serial.println(BP32.firmwareVersion());
+
+  BP32.setup(onControllerConnected, onControllerDisconnected);
+  BP32.enableNewBluetoothConnections(true);
+
+  Serial.println("[BT] Waiting for a gamepad...");
 }
 
 void loop(){
-
-
+  BP32.update();
+  delay(10);
 }
