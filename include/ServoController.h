@@ -1,5 +1,6 @@
 #pragma once
 #include<Adafruit_PWMServoDriver.h>
+#include "GamepadController.h"
 
 class ServoController {
 public:
@@ -18,6 +19,7 @@ public:
 
     void pca_begin();
     void moveServo(servoJoint joint, int angle);
+    void controll_tentacle(GamepadController& controller);
 
 private:
     bool initialized_ = false;
