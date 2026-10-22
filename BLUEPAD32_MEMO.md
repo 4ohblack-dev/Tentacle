@@ -13,11 +13,16 @@
 | 左スティックY | `gamepad->axisY()` | `int32_t` | 約 −512〜512、中央は約0 | `input.leftY` |
 | 右スティックX | `gamepad->axisRX()` | `int32_t` | 約 −512〜512、中央は約0 | `input.rightX` |
 | 右スティックY | `gamepad->axisRY()` | `int32_t` | 約 −512〜512、中央は約0 | `input.rightY` |
-| L2トリガー | `gamepad->brake()` | `int32_t` | 0〜1023、離すと0、最大押し込みで1023 | `input.leftAxis` |
-| R2トリガー | `gamepad->throttle()` | `int32_t` | 0〜1023、離すと0、最大押し込みで1023 | `input.rightAxis` |
+スティック→中央値４，-508~512
+左、上→マイナス
+| L2トリガー | `gamepad->brake()` | `int32_t` | 0〜1020、離すと0、最大押し込みで1020 | `input.leftAxis` |
+| R2トリガー | `gamepad->throttle()` | `int32_t` | 0〜1020、離すと0、最大押し込みで1020 | `input.rightAxis` |
 | L1ボタン | `gamepad->l1()` | `bool` | 押下で `true` | `input.leftbutton` |
 | R1ボタン | `gamepad->r1()` | `bool` | 押下で `true` | `input.rightbutton` |
 | 十字キー | `gamepad->dpad()` | `uint8_t` | ビットマスク。未操作は0 | `input.dpad` |
+左：0x08、右：0x04、上：0x01、下：0x02
+ボタン
+〇：0x002、□：0x004、△：0x008、✕：0x001
 
 スティックは通常、右・下がプラス、左・上がマイナスです。
 同梱の公式サンプルは軸を −511〜512 と表記しています。端点や中心値には機種差があるため、上の表は概数です。端点との完全一致ではなく、しきい値で判定してください。

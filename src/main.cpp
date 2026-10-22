@@ -30,13 +30,14 @@ struct controllerInput{
   int rightX = 0;
   int rightY = 0;
 
-  int leftAxis = 0;
-  int rightAxis = 0;
+  int brake = 0;
+  int throttle = 0;
 
   bool leftbutton = false;
   bool rightbutton = false;
 
   uint8_t dpad = 0;
+  uint16_t buttons = 0;
   bool connected = false;
 };
 
@@ -44,26 +45,24 @@ controllerInput input;
 
 // 今回はゲームパッド1台を追跡する
 ControllerPtr gamepad = nullptr;
+ControllerPtr controllers[BP32_MAX_GAMEPADS] = {};
 
 void onControllerConnected(ControllerPtr ctl) {
-  if (!ctl->isGamepad()) {
-    Serial.println("[BT] Connected device is not a gamepad");
-    return;
+  // 接続時点では入力データの種類が未確定の場合があるため、受信後に判定する。
+  for (auto& controller : controllers) {
+    if (controller == nullptr) {
+      controller = ctl;
+      break;
+    }
   }
-
-  if (gamepad != nullptr) {
-    Serial.println("[BT] Another gamepad connected; ignored");
-    return;
-  }
-
-  gamepad = ctl;
-  input.connected = true;
-
-  Serial.print("[BT] Gamepad connected: ");
+  Serial.print("[BT] Controller connected: ");
   Serial.println(ctl->getModelName());
 }
 
 void onControllerDisconnected(ControllerPtr ctl) {
+  for (auto& controller : controllers) {
+    if (controller == ctl) controller = nullptr;
+  }
   if (ctl != gamepad) {
     return;
   }
@@ -72,6 +71,45 @@ void onControllerDisconnected(ControllerPtr ctl) {
   input = controllerInput{};  // connectedを含めて初期値に戻す
 
   Serial.println("[BT] Gamepad disconnected");
+}
+
+int adjustAxis(float value){
+  value = constrain(value,-508,512);
+  if(value < 4){
+    return map(value,-508,4,-512,0);
+  } else {
+    return map(value,4,512,0,512);
+  }
+}
+
+bool readController(){
+  if (!gamepad) {
+    for (auto controller : controllers) {
+      if (controller && controller->isConnected() &&
+          controller->hasData() && controller->isGamepad()) {
+        gamepad = controller;
+        input.connected = true;
+        Serial.println("[BT] Gamepad input ready");
+        break;
+      }
+    }
+  }
+  if (!gamepad || !gamepad->isConnected() || !gamepad->hasData()) {
+    return false;
+  }
+
+  input.leftX = adjustAxis(gamepad->axisX());
+  input.leftY = adjustAxis(gamepad->axisY());
+  input.rightX = adjustAxis(gamepad->axisRX());
+  input.rightY = adjustAxis(gamepad->axisRY());
+  input.brake = gamepad->brake();
+  input.throttle = gamepad->throttle();
+  input.leftbutton = gamepad->l1();
+  input.rightbutton = gamepad->r1();
+  input.buttons = gamepad->buttons();
+  input.dpad = gamepad->dpad();
+
+  return true;
 }
 
 void setup(){
@@ -95,6 +133,18 @@ void setup(){
 }
 
 void loop(){
-  BP32.update();
+  static unsigned long lastPrint = 0;
+  if (BP32.update() && readController()) {
+    if (millis() - lastPrint >= 100) {
+      lastPrint = millis();
+      Serial.printf("LX=%f LY=%f RX=%f RY=%f L2=%d R2=%d L1=%d R1=%d dpad=0x%02x buttons=0x%04x\n",
+                    input.leftX, input.leftY, input.rightX, input.rightY,
+                    input.brake, input.throttle, input.leftbutton, input.rightbutton,
+                    input.dpad, input.buttons);
+    }
+  } else if (!input.connected && millis() - lastPrint >= 2000) {
+    lastPrint = millis();
+    Serial.println("[BT] Waiting for gamepad input...");
+  }
   delay(10);
 }
