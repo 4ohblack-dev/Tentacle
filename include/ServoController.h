@@ -19,6 +19,20 @@ public:
         servoType type;
         int stopMin;
         int stopMax;
+        int servoStopValue;
+
+        servoJoint(
+            uint8_t ch,
+            servoType servoKind,
+            int minValue,
+            int maxValue,
+            int stopValue = 100
+        )
+            : channel(ch),
+              type(servoKind),
+              stopMin(minValue),
+              stopMax(maxValue),
+              servoStopValue(stopValue) {}
     };
 
     // 停止範囲は仮の値。各サーボに合わせて調整
@@ -34,8 +48,10 @@ public:
     int deadzone(int value,int stopMin,int stopMax);
     void moveServo(const servoJoint& joint, int angle);
     void controll_tentacle(GamepadController& controller);
+    void stopContinuousServos();
 
 private:
     bool initialized_ = false;
+    unsigned long lastInputMs_ = 0;
 };
 
