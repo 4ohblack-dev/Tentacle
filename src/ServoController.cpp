@@ -13,12 +13,24 @@ void ServoController::pca_begin(){
     }
 }
 
-void ServoController ::moveServo(servoJoint joint,int angle){
+int ServoController::deadzone(int value,int stopMin,int stopMax){
+    if (stopMin <= value && value <= stopMax){
+        return servoStopValue;
+    } else {
+        return value;
+    }
+}
+
+void ServoController ::moveServo(const servoJoint& joint,int angle){
     if (!initialized_) {
         return;
     }
-    int pulseUs = map(constrain(angle,0,180),0,180,servoMin,servoMax);
-    pca.writeMicroseconds(joint,pulseUs);
+    angle = constrain(angle,0,180);
+    if(joint.type == servoType::Continuous){
+        deadzone(angle,joint.stopMin,joint.stopMax);
+    }
+    int pulseUs = map(angle,0,180,servoMin,servoMax);
+    pca.writeMicroseconds(joint.channel,pulseUs);
 
 }
 

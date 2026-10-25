@@ -7,18 +7,32 @@ public:
     Adafruit_PWMServoDriver pca;
     int servoMin = 500;
     int servoMax = 2400;
+    int servoStopValue = 100;
 
-    enum servoJoint : uint8_t{
-      baseX = 0,
-      baseY = 1,
-      frontX = 2,
-      frontY = 3,
-      wrist = 4,
-      grip = 5,
+    enum class servoType : uint8_t{
+        Continuous,
+        Positional,
     };
 
+    struct servoJoint {
+        uint8_t channel;
+        servoType type;
+        int stopMin;
+        int stopMax;
+    };
+
+    // 停止範囲は仮の値。各サーボに合わせて調整
+    servoJoint baseX  {0,servoType::Continuous,96,106};
+    servoJoint baseY  {1,servoType::Continuous,97,106};
+    servoJoint frontX {2,servoType::Continuous,96,105};
+    servoJoint frontY {3,servoType::Continuous,97,106};
+
+    servoJoint wrist  {4,servoType::Positional,0,0};
+    servoJoint grip   {5,servoType::Positional,0,0};
+
     void pca_begin();
-    void moveServo(servoJoint joint, int angle);
+    int deadzone(int value,int stopMin,int stopMax);
+    void moveServo(const servoJoint& joint, int angle);
     void controll_tentacle(GamepadController& controller);
 
 private:
